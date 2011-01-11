@@ -1,0 +1,258 @@
+this sgobjects stargate
+
+	symbols = (new
+		0 = 0
+		1 = 0
+		2 = 0
+		3 = 0
+		4 = 0
+		5 = 0
+		6 = 0
+	)
+
+	dial = false
+	dial := { if (@sgwidget children cam1 children dial mousedown) {true} else {..dial} }
+
+	cursym = 0
+	prevsym := {.cursym}
+	cursym := {
+		if (.dial) {
+			if (..locked and (..prevsym == (..cursym))) {
+				..cursym + 1
+			} else {
+				..cursym
+			}
+		} else {0}
+	}
+
+	match = false
+	ready = false
+	locked = false
+	rotspeed = -0.3
+	rotation = 0.0
+	rotation := {
+		if (.dial and (.match not or (.locked)) and (.ready not)) {
+			..rotation + (..rotspeed * (@root itime))
+		} else {
+			..rotation
+		}
+	}
+
+	#match := { this cursym; false }
+	symrot is { 0.1611 * (.symbols (.cursym)) - (0.6981 * (.cursym)) }
+	match is { .rotation < (.symrot + 0.1) and (.rotation > (.symrot - 0.1)) and (.dial) }
+
+	chevspeed = 0.8
+	chevmove = 0.0
+	chevdir = false
+
+
+	#Why does this work and the other not!
+	#chevif = (new
+	#	nif = (new
+	#		true is {true}
+	#		false is {...chevdir}
+	#	)
+	#	true is { false }
+	#	false is { .nif (..chevmove > 0.9999) }
+	#)
+	#chevdir := { .chevif (.match == false) }
+
+	chevdir := {
+		if (.match == false) {false} else {
+			if (..chevmove > 0.9999) {true} else {
+				..chevdir
+			}
+		}
+	}
+
+	chevmove := {
+		if (.match) {
+			if (..locked) {0.0} else {
+				if (..chevdir) {
+					..chevmove - (..chevspeed * (@root itime))
+				} else {
+					..chevmove + (..chevspeed * (@root itime))
+				}
+			}
+		} else {0.0}
+	}
+
+	chevrons = (new
+		0 = (new
+			on = 0
+			on := {
+				if (@stargate cursym == 0) {
+					if (@stargate locked) {1} else {0}
+				} else {
+					..on
+				}
+			}
+			position = 0.0
+			position := {
+				if (@stargate cursym == 0) {
+					@stargate chevmove
+				} else {
+					..position
+				}
+			}
+		)
+
+		1 = (new
+			on = 0
+			on := {
+				if (@stargate cursym == 1) {
+					if (@stargate locked) {1} else {0}
+				} else {
+					..on
+				}
+			}
+			position = 0.0
+			position := {
+				if (@stargate cursym == 1) {
+					@stargate chevmove
+				} else {
+					..position
+				}
+			}
+		)
+
+		2 = (new
+			on = 0
+			on := {
+				if (@stargate cursym == 2) {
+					if (@stargate locked) {1} else {0}
+				} else {
+					..on
+				}
+			}
+			position = 0.0
+			position := {
+				if (@stargate cursym == 2) {
+					@stargate chevmove
+				} else {
+					..position
+				}
+			}
+		)
+
+		3 = (new
+			on = 0
+			on := {
+				if (@stargate cursym == 3) {
+					if (@stargate locked) {1} else {0}
+				} else {
+					..on
+				}
+			}
+			position = 0.0
+			position := {
+				if (@stargate cursym == 3) {
+					@stargate chevmove
+				} else {
+					..position
+				}
+			}
+		)
+
+		6 = (new
+			on = 0
+			on := {
+				if (@stargate cursym == 4) {
+					if (@stargate locked) {1} else {0}
+				} else {
+					..on
+				}
+			}
+			position = 0.0
+			position := {
+				if (@stargate cursym == 4) {
+					@stargate chevmove
+				} else {
+					..position
+				}
+			}
+		)
+
+		7 = (new
+			on = 0
+			on := {
+				if (@stargate cursym == 5) {
+					if (@stargate locked) {1} else {0}
+				} else {
+					..on
+				}
+			}
+			position = 0.0
+			position := {
+				if (@stargate cursym == 5) {
+					@stargate chevmove
+				} else {
+					..position
+				}
+			}
+		)
+
+		8 = (new
+			on = 0
+			on := {
+				if (@stargate cursym == 6) {
+					if (@stargate locked) {1} else {0}
+				} else {
+					..on
+				}
+			}
+			position = 0.0
+			position := {
+				if (@stargate cursym == 6) {
+					@stargate chevmove
+				} else {
+					..position
+				}
+			}
+		)
+	)
+
+	locked is { .chevmove < 0.0001 and (.chevdir == true) }
+
+	ready is { .cursym == 7 }
+	#ready = true
+
+	holespeed = 0.8
+	hole = 1.0
+	active is { .hole < -0.9999 }
+	hole := {
+		if (.ready) {
+			if (..active) {-1.0} else {
+				..hole - (..holespeed * (@root itime))
+			}
+		} else {1.0}
+	}
+
+	
+	position = (new x=0.0 y=0.0 z=-4.0)
+
+	rotspeed2 = 0.0
+	orientation = (new x=0.0 y=-0.5 z=0.0
+		y := { .y + (@root itime * (@stargate rotspeed2)) }
+	)
+
+	visible = true
+;
+
+this sgobjects puddle
+	
+	primitive = cube
+	width = 3.3
+	height = 3.3
+	depth = 0.1
+	visible = true
+
+	position = (new x=0.0 y=0.0 z=-3.0
+		z := { @stargate position z }
+	)
+
+	orientation = (new x=0.0 y=2.5 z=0.0
+		y := { @stargate orientation y }
+	)
+;

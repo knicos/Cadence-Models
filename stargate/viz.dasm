@@ -1,0 +1,273 @@
+
+this chevronshader = (new
+	type = Shader
+	vert = (new type=LocalFile filename="stargate/data/chevron.vert")
+	frag = (new type=LocalFile filename="stargate/data/chevron.frag")
+);
+
+this chevrontextures = (new
+	0 = (new
+		type = Texture
+		file = (new
+			type = LocalFile
+			filename = "stargate/data/chevron_diffuse.tga"
+		)
+	)
+	1 = (new
+		type = Texture
+		file = (new
+			type = LocalFile
+			filename = "stargate/data/chevron_normal.tga"
+		)
+	)
+);
+
+this sgobjects = (this bloom 0 scene instances);
+this sgobjects stargate = (@stargate = (new type = IModel));
+this sgobjects puddle = (new type = IPrimitive3D);
+
+this sgobjects puddle material = (new
+		type = Material
+		shader = (new
+			type = Shader
+			vert = (new type=LocalFile filename="stargate/data/puddle.vert")
+			frag = (new type=LocalFile filename="stargate/data/puddle.frag")
+		)
+		variables = (new
+			world = 0
+			hole = 1.0
+			hole := { @stargate hole }
+			time := { @root time * 4.0 }
+			sd = 0.3
+			bright = 0.3
+		)
+
+		textures = (new
+			0 = (this widgets root sprite texture)
+		)
+	)
+;
+
+this sgobjects stargate model = (new
+		type = Model
+		file = (new type=LocalFile filename="stargate/data/stargate.3ds")
+
+		materials = (new
+			Chevron0 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on := { @stargate chevrons 0 on }
+					position := { @stargate chevrons 0 position }
+				)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+			)
+
+			Chevron1 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on := { @stargate chevrons 1 on }
+					position := { @stargate chevrons 1 position }
+				)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+			)
+
+			Chevron2 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on := { @stargate chevrons 2 on }
+					position := { @stargate chevrons 2 position }
+				)
+			)
+
+			Chevron3 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on := { @stargate chevrons 3 on }
+					position := { @stargate chevrons 3 position }
+				)
+			)
+
+			Chevron4 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on = 0
+					position = 0.0
+				)
+			)
+
+			Chevron5 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on = 0
+					position = 0.0
+				)
+			)
+
+			Chevron6 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on := { @stargate chevrons 6 on }
+					position := { @stargate chevrons 6 position }
+				)
+			)
+
+			Chevron7 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on := { @stargate chevrons 7 on }
+					position := { @stargate chevrons 7 position }
+				)
+			)
+
+			Chevron8 = (new
+				type = Material
+				shininess = 2
+				shader = (this chevronshader)
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+				textures = (this chevrontextures)
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					on := { @stargate chevrons 8 on }
+					position := { @stargate chevrons 8 position }
+				)
+			)
+
+			Default = (new
+				type = Material
+				shininess = 2
+				shader = (new
+					type = Shader
+					vert = (new type=LocalFile filename="stargate/data/normal.vert")
+					frag = (new type=LocalFile filename="stargate/data/normal.frag")
+				)
+
+				textures = (new
+					0 = (new
+						type = Texture
+						file = (new
+							type = LocalFile
+							filename = "stargate/data/rim_diffuse.tga"
+						)
+					)
+					1 = (new
+						type = Texture
+						file = (new
+							type = LocalFile
+							filename = "stargate/data/rim_normal.tga"
+						)
+					)
+				)
+
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+				)
+
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+			)
+
+			Symbols = (new
+				type = Material
+				shininess = 2
+				shader = (new
+					type = Shader
+					vert = (new type=LocalFile filename="stargate/data/ring.vert")
+					frag = (new type=LocalFile filename="stargate/data/normal.frag")
+				)
+
+				textures = (new
+					0 = (new
+						type = Texture
+						file = (new
+							type = LocalFile
+							filename = "stargate/data/symbol_diffuse.tga"
+						)
+					)
+					1 = (new
+						type = Texture
+						file = (new
+							type = LocalFile
+							filename = "stargate/data/symbol_normal.tga"
+						)
+					)
+				)
+
+				variables = (new
+					colourMap = 0
+					normalMap = 1
+					angle := { @stargate rotation }
+				)
+
+				diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				ambient = (new r=1.0 g=1.0 b=1.0 a=1.0)
+				specular = (new r=0.7 g=0.7 b=0.7 a=1.0)
+			)
+		)
+	);

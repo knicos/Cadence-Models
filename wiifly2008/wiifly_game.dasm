@@ -1,0 +1,161 @@
+@wiiwidget wiifly = (new
+	type = WViewport
+	x = 0
+	y = 0
+	width is { @window width }
+	height is { @window height }
+	visible = true
+
+	scene = (new
+		type = Scene3D
+		instances = (new
+			height = (new
+				type = IHeightmap
+				source = (new
+					type = HMImageSource
+					file = (new type=LocalFile filename="wiifly2008/height.png")
+					#Global region material.
+					material = (new
+						texture = (new
+							file = (new type=LocalFile filename="wiifly2008/ground.tga")
+						)
+						diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+						ambient = (new r=0.7 g=0.7 b=0.7 a=1.0)
+					)
+					materials = (new
+						#Splats
+						0 = (new
+							diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+							ambient = (new r=0.7 g=0.7 b=0.7 a=1.0)
+							textures = (new
+								#Splat diffuse
+								1 = (new
+									file = (new type=LocalFile filename="wiifly2008/splat0.tga")
+								)
+								#Splat alpha
+								0 = (new
+									file = (new type=LocalFile filename="wiifly2008/splat0_alpha.tga")
+								)
+							)
+						)
+					)
+				)
+				
+				scale = (new x=1.0 y=20.0 z=1.0)
+				position = (new x=0.0 y=-20.0 z=0.0)
+				patchsize = 16
+				wireframe is { @keyboard keys tab }
+			)
+
+			skybox = (new
+				type = IModel
+				model = (new
+					type = Model
+					file = (new type=LocalFile filename="wiifly2008/skybox.x")
+					materials = (new
+						ft = (new
+							ambient = (new r=0.2 g=0.2 b=0.2 a=1.0)
+							diffuse = (new r=1.0 g=1.0 b=1.0 a=1.0)
+						)
+					)
+				)
+				scale = (new x=20.0 y=20.0 z=20.0)
+				skybox = true
+			)
+			ship = (@ship = (new)
+				type = IModel
+				model = (new
+					type = Model
+					file = (new
+						type = LocalFile
+						filename = "wiifly2008/ship.x"
+					)
+				)
+
+				speed = 30.0
+
+				position = (new x = 200.0 y = 8.0 z = 200.0
+					tx is { @ship speed * (@math sin (@ship orientation y)) * (@math cos (@ship orientation x)) }
+					ty is { @ship speed * (@math sin (@ship orientation x)) }
+					tz is { @ship speed * (@math cos (@ship orientation y)) * (@math cos (@ship orientation x)) }
+					x := { .x + (.tx * (@root itime)) }
+					y := { .y - (.ty * (@root itime)) }
+					z := { .z + (.tz * (@root itime)) }
+				)
+				scale = (new x = 0.3 y = 0.3 z = 0.3)
+
+				#Want an agent to make a bullet object every 0.1 seconds whilst
+				#Wiimote button 'a' is being pressed. This requires clone and side-effects.
+				#when (.makebullet) {
+				#	local bullet = (.(this) prototypes bullet clone);
+				#	local bullet position = (.position clone);
+				#	local bullet velocity = (...);
+				#	.scene instances (local bullet) = (local bullet);
+				#}
+
+				orientation = (new x = 0.0 y = 0.0 z = 0.0
+					wiix is { @wiimotes 0 axes 0 value }
+					wiiy is { @wiimotes 0 axes 1 value }
+					wiiz is { @wiimotes 0 axes 2 value }
+
+
+					az is { @math atan2 (0.0 - (.wiix)) (.wiiz) }
+					ax is { @math atan2 (0.0 - (.wiiy)) (@math sqrt (.wiix * (.wiix) + (.wiiz * (.wiiz)))) }
+
+					dx is {
+
+						if (.ax < -1.4) -1.4 else {
+							if (..ax > 1.4) 1.4 else {
+								..ax
+							}
+						}
+					}
+
+					dz is {
+
+						if (.az > (.x + 3.14)) {
+							..az - 6.28
+						} else {
+							if (..az < (..x - 3.14)) {
+								..az + 6.28
+							} else {
+								..az
+							}
+						}
+					}
+
+					x := { .x - (.dx + (.x) * (@root itime) * 2.0) }
+					z := { .z - (.dz + (.z) * (@root itime) * 2.0) }
+					y := { .y + (@math sin (.dz) * (@root itime) * 3.0) }
+				)
+			)
+		)
+	)
+
+	camera = (@camera = (new)
+		type = Camera3D
+		fov = 90.0
+		near = 1.0
+		far = 500.0
+
+		position = (new x = 8.0 y = -40.0 z = 8.0
+			tx is { @ship position x + (2.0 * (@math cos (0.0 - (@ship orientation y + 1.57)))) }
+			ty is { @ship position y + 1.0 }
+			tz is { @ship position z + (2.0 * (@math sin (0.0 - (@ship orientation y + 1.57)))) }
+
+			x := {.x + (.tx - (.x) * 5.0 * (@root itime))}
+			y := {.y + (.ty - (.y) * 5.0 * (@root itime))}
+			z := {.z + (.tz - (.z) * 5.0 * (@root itime))}
+		)
+
+		orientation = (new x = 0.0 y = 0.0 z = 0.0
+			dirx is { @camera position x - (@ship position x) }
+			diry is { @camera position y - (@ship position y) }
+			dirz is { @camera position z - (@ship position z) }
+			
+			y is { 0.0 - (@math atan2 (.dirz) (.dirx)) + 1.57}
+			dist is { @math sqrt (.dirx * (.dirx) + (.dirz * (.dirz))) }
+			x is { 0.0 - (@math atan2 (.diry) (.dist)) }
+		)
+	)
+);

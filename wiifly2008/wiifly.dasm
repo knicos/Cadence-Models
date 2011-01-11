@@ -1,0 +1,3 @@
+%include "wgd/wgd.dasm";
+@wiiwidget = (.widgets root children);
+%include "wiifly2008/wiifly_game.dasm";

@@ -1,0 +1,506 @@
+#this widgets root children stargate = (this prototypes window _clone);
+@mouse grab := { .buttons left };
+this bloom = (@bloom = (new)
+
+	blur = (new
+		type = Shader
+		vert = (new type=LocalFile filename="stargate/data/blur.vp")
+		frag = (new type=LocalFile filename="stargate/data/blur.fp")
+	)
+
+	bloom = (new
+		type = Shader
+		vert = (new type=LocalFile filename="stargate/data/extractBloom.vp")
+		frag = (new type=LocalFile filename="stargate/data/extractBloom.fp")
+	)
+
+	tone = (new
+		type = Shader
+		vert = (new type=LocalFile filename="stargate/data/tone.vp")
+		frag = (new type=LocalFile filename="stargate/data/tone.fp")
+	)
+
+	0 = (new
+		type=RenderTarget
+		depth = true
+		scene = (new
+			type = Scene3D
+			instances = (new)
+		)
+
+		camera = (@camera = (new)
+			type = Camera3D
+			fov = 60.0
+			near = 1.0
+			far = 100.0
+
+			up := { @keyboard keys up }
+			left := { @keyboard keys left }
+			down := { @keyboard keys down }
+			right := { @keyboard keys right }
+			
+			dup := { if (.up) {-1.6} else {0.0} }
+			dleft := { if (.left) {1.6} else {0.0} }
+			ddown := { if (.down) {1.6} else {0.0} }
+			dright := { if (.right) {-1.6} else {0.0} }
+			
+			scalexz := {
+				@math cos (.orientation x)
+			}
+		
+			deltax := {
+				@math sin (.orientation y - 1.5707) * (.dleft + (.dright)) +
+				(@math cos (.orientation y - 1.5707) * (.dup + (.ddown)) * (.scalexz))
+			}
+			
+			deltay := {
+				@math sin (.orientation x) * (.dup + (.ddown)) * -1.0
+			}
+			
+			deltaz := { 
+				@math sin (.orientation y) * (.dleft + (.dright)) +
+				(@math cos (.orientation y) * (.dup + (.ddown)) * (.scalexz))
+			}
+			
+			
+			position = (new x = 0.0 y = 0.0 z = 3.0
+				x := { .x + (@root itime * (@camera deltax)) }
+				y := { .y + (@root itime * (@camera deltay)) }
+				z := { .z + (@root itime * (@camera deltaz)) }
+			)
+			
+			mousex := { if(@mouse grab) { @mouse deltax } else {0} }
+			mousey := { if(@mouse grab) { @mouse deltay } else {0} }
+			
+			orientation = (new x = 0.0 y = 0.0 z = 0.0
+				x := { .x - (@root itime * (@camera mousey)) }
+				y := { .y - (@root itime * (@camera mousex)) }
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width is { @sgwidget children cam1 width }
+			height is { @sgwidget children cam1 height }
+			compress = false
+			hdr = true
+			nearest = true
+			clamp = true
+		)
+
+		depthtexture = (new
+			type = Texture
+			hdr = false
+			nearest = false
+			compress = false
+			clamp = true
+		)
+	)
+
+	12 = (new
+		type=RenderTarget
+
+		source := { @bloom 0 }
+		material = (new
+			type = Material
+			shader := { @bloom blur }
+			#variables go here.
+			variables = (new
+				dx := { 1.0 / (@bloom 0 texture width) }
+				dy = 0.0
+				#tex = 0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 0 texture width }
+			height := { @bloom 0 texture height }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	13 = (new
+		type=RenderTarget
+
+		source := { @bloom 12 }
+		material = (new
+			type = Material
+			shader := { @bloom blur }
+			#variables go here.
+			variables = (new
+				dx = 0.0
+				dy := { 1.0 / (@bloom 0 texture height) }
+				#tex = 0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 0 texture width }
+			height := { @bloom 0 texture height }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	14 = (new
+		type=RenderTarget
+
+		source := { @bloom 13 }
+		material = (new
+			type = Material
+			shader := { @bloom blur }
+			#variables go here.
+			variables = (new
+				dx := { 1.0 / (@bloom 14 texture width) }
+				dy = 0.0
+				#tex = 0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 13 texture width / 4 }
+			height := { @bloom 13 texture height / 4 }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	15 = (new
+		type=RenderTarget
+
+		source := { @bloom 14 }
+		material = (new
+			type = Material
+			shader := { @bloom blur }
+			#variables go here.
+			variables = (new
+				dx = 0.0
+				dy := { 1.0 / (@bloom 14 texture height) }
+				#tex = 0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 13 texture width / 2 }
+			height := { @bloom 13 texture height / 2 }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	11 = (new
+		type=RenderTarget
+
+		source := { @bloom 13 }
+		material = (new
+			type = Material
+			shader = (new
+				type=Shader
+				vert = (new type=LocalFile filename="stargate/data/dof.vp")
+				frag = (new type=LocalFile filename="stargate/data/dof.fp")
+			)
+			variables = (new
+				btex = 0
+				dtex = 1
+				tex = 2
+				#w := { @bloom 0 texture width div 2 }
+				#h := { @bloom 0 texture height div 2 }
+			)
+			textures = (new
+				1 := { @bloom 0 depthtexture }
+				2 := { @bloom 0 texture }
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 0 texture width }
+			height := { @bloom 0 texture height }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	1 = (new
+		type=RenderTarget
+
+		source := { @bloom 0 }
+		material = (new
+			type = Material
+			shader = (new
+				type = Shader
+				vert = (new type=LocalFile filename="stargate/data/extractBloom.vp")
+				frag = (new type=LocalFile filename="stargate/data/extractBloom.fp")
+			)
+			#variables go here.
+			variables = (new
+				brightThreshold := { @bloom 10 material variables brightThreshold }
+				#w = 300.0
+				#h = 200.0
+				#tex = 0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 0 texture width / 2 }
+			height := { @bloom 0 texture height / 2 }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	2 = (new
+		type=RenderTarget
+
+		source := { @bloom 1 }
+		material = (new
+			type = Material
+			shader := { @bloom blur }
+			#variables go here.
+			variables = (new
+				#w := { @bloom 2 texture width }
+				#h := { @bloom 2 texture height }
+				dx := { 1.0 / (@bloom 2 texture width) }
+				dy = 0.0
+				#tex = 0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 1 texture width / 4 }
+			height := { @bloom 1 texture height / 4 }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	3 = (new
+		type=RenderTarget
+
+		source := { @bloom 2 }
+		material = (new
+			type = Material
+			shader := { @bloom blur }
+			#variables go here.
+			variables = (new
+				#w := { @bloom 3 texture width }
+				#h := { @bloom 3 texture height }
+				#tex = 0
+				dy := { 1.0 / (@bloom 2 texture height) }
+				dx = 0.0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 1 texture width / 4 }
+			height := { @bloom 1 texture height / 4 }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	4 = (new
+		type=RenderTarget
+
+		source := { @bloom 3 }
+		material = (new
+			type = Material
+			shader := { @bloom blur }
+			#variables go here.
+			variables = (new
+				#w := { @bloom 2 texture width }
+				#h := { @bloom 2 texture height }
+				dx := { 1.0 / (@bloom 4 texture width) }
+				dy = 0.0
+				#tex = 0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 3 texture width / 4 }
+			height := { @bloom 3 texture height / 4 }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	5 = (new
+		type=RenderTarget
+
+		source := { @bloom 4 }
+		material = (new
+			type = Material
+			shader := { @bloom blur }
+			#variables go here.
+			variables = (new
+				#w := { @bloom 3 texture width }
+				#h := { @bloom 3 texture height }
+				#tex = 0
+				dy := { 1.0 / (@bloom 4 texture height) }
+				dx = 0.0
+			)
+		)
+
+		texture = (new
+			type = Texture
+			width := { @bloom 3 texture width / 4 }
+			height := { @bloom 3 texture height / 4 }
+			hdr = true
+			clamp = true
+		)
+	)
+
+	6 = (new
+		type=RenderTarget
+
+		source := { @bloom 5 }
+		material = (new
+			type = Material
+			blending = one
+			#shader := { @bloom blur }
+			#variables go here.
+			#variables = (new
+			#	w = 300.0
+			#	h = 200.0
+				#tex = 0
+			#)
+		)
+
+		clear = false
+		texture := { @bloom 3 texture }
+	)
+
+	7 = (new
+		type=RenderTarget
+
+		source := { @bloom 6 }
+		material = (new
+			type = Material
+			blending = one
+			#shader := { @bloom blur }
+			#variables go here.
+			#variables = (new
+			#	w = 300.0
+			#	h = 200.0
+				#tex = 0
+			#)
+		)
+
+		clear = false
+		texture := { @bloom 3 texture }
+	)
+
+	8 = (new
+		type=RenderTarget
+
+		source := { @bloom 7 }
+		material = (new
+			type = Material
+			blending = one
+			#shader := { @bloom blur }
+			#variables go here.
+			#variables = (new
+			#	w = 300.0
+			#	h = 200.0
+				#tex = 0
+			#)
+		)
+
+		clear = false
+		texture := { @bloom 2 texture }
+	)
+
+	9 = (new
+		type=RenderTarget
+
+		source := { @bloom 6 }
+		material = (new
+			type = Material
+			blending = one
+			#shader := { @bloom blur }
+			#variables go here.
+			#variables = (new
+			#	dx := { 1.0 div (@bloom 3 texture width) }
+			#	dy = 0.0
+			#	tex = 0
+			#)
+		)
+
+		clear = false
+		texture := { @bloom 1 texture }
+	)
+
+	10 = (new
+		type=RenderTarget
+
+		source := { @bloom 9 }
+		material = (new
+			type = Material
+			#blending = one
+			shader := { @bloom tone }
+			variables = (new
+				brightThreshold = 0.9
+				bloomFactor = 0.4
+				exposure = 0.7
+				tex = 0
+				bloom = 1
+			)
+
+			textures = (new
+				0 := { @bloom 0 texture }
+				1 := { @bloom 9 texture }
+			)
+		)
+
+		#clear = false
+		#texture := { @bloom 0 texture } 
+		texture = (new
+			type = Texture
+			width := { @bloom 0 texture width }
+			height := { @bloom 0 texture height }
+			compress = false
+			hdr = true
+			clamp = true
+		)
+	)
+);
+
+#this widgets root children stargate title = "Stargate Game";
+#this widgets root children stargate height = 750;
+#this widgets root children stargate width = 1000;
+#this widgets root children #stargate children
+@sgwidget children cam1 = (new
+	type = WViewport
+	x = 0
+	y = 20
+	#parent = (this widgets root children stargate)
+	width := { @sgwidget width }
+	height := { @sgwidget height - 20 }
+	visible = true
+
+	source = (this bloom 10)
+
+	#scene := { @bloom 0 scene }
+	#camera := { @bloom 0 camera }
+
+	children = (new)
+);
+
+@sgwidget children cam1 children dial = (new union (@prototypes button));
+@sgwidget children cam1 children dial
+	caption = "Dial"
+	visible = true
+	x = 10
+	y = 30
+	width = 100
+	#dial_agent := { if (this mousedown) { @root sgobjects stargate dial = true } }
+	height = 20;

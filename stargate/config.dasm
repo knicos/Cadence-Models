@@ -1,0 +1,9 @@
+%include "wgd/wgd.dasm";
+%include "ui/ui.dasm";
+@sgwidget = (this widgets root);
+
+%include "window.dasm";
+%include "viz.dasm";
+%include "gate.dasm";
+
+@ui browser root = (@stargate);

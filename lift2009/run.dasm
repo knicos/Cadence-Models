@@ -1,0 +1,45 @@
+%include "ui/ui.dasm";
+%include "wgd/wgd.dasm";
+
+@lift = (new union (@prototypes image)
+    filename = "lift.png"
+    x = 100
+    y = 100
+    width = 100
+    height = 100
+);
+
+.widgets root children = (new);
+@screen = (.widgets root children);
+
+@screen mylift = (@lift);
+
+@screen floor1 = (new union (@lift)
+    filename = "floor.png"
+    x = 200
+    width = 400
+);
+
+@lift offsety = 100;
+@lift floor = 0;
+@lift speed = 20.0;
+
+@lift atfloor is {
+    .y < (.floor_pix + 2) and (.y > (.floor_pix -2))
+};
+
+@lift floor_pix is { 400 - (.floor * 100) + (.offsety) };
+
+@lift direction is {
+    if (.y < (.floor_pix)) { 1.0 } else { -1.0 }
+};
+
+@lift y := {
+    if (.atfloor not) {
+        ..y + (..direction * (..speed) * (@root itime))
+    } else {
+        ..y
+    }
+};
+
+@ui browser root = (@lift);

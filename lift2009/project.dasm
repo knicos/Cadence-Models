@@ -1,0 +1,9 @@
+@projects
+liftPope2009 = (new
+	author = "Nicolas Pope"
+	title = "Lift"
+	year = 2009
+	base = (new)
+	file = (new type=LocalFile filename="liftPope2009/run.dasm")
+);
+
