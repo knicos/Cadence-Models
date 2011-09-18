@@ -1,0 +1,58 @@
+
+##Traffic light sprite is dependent on eden state
+@tlight = (new union (@prototypes image)
+	stage = 1
+	filename = ""
+	sprite is {
+		if (.stage == 1) {
+			@lightgreenfull sprite
+		} else if (..stage == 2) {
+			@lightgreen sprite
+		} else if (..stage == 3) {
+			@lightorange sprite
+		} else {
+			@lightred sprite
+		}
+	}
+	x = 0.00
+	y = 0.00
+);
+
+
+
+##ADD OBJECTS TO MODEL
+################
+
+##Add traffic lights and their starting positions, link to eden states
+
+@eden handles = (new
+                  type = Handle
+                  state1 = 1
+                  state2 = 1
+                  state3 = 1
+);
+
+@display %deep light1 = (new union (@tlight)
+	x = 339
+	y = 330
+	stage is { @root eden handles state1 }
+);
+
+@display %deep light2 = (new union (@tlight)
+	x = 401
+	y = 330
+	stage is { @root eden handles state2 }
+);
+
+@display %deep light3 = (new union (@tlight)
+	x = 339
+	y = 430
+	stage is { @root eden handles state3 }
+);
+
+
+@eden oracles = (new
+	type = Oracle
+	start is {@loptions btnStartStop toggle}
+);
+

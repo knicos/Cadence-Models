@@ -1,0 +1,324 @@
+
+@ui browser root = (@root notations dasm variables);
+
+@eden = (.eden);
+
+@screen = (.widgets root children);
+
+
+@screen options = (new union (@prototypes window)
+	x = 10
+	y = 10
+	width = 250
+	height = 400
+	title = "Car Info & Options"
+);
+
+@options = ( @screen options children );
+
+@screen display = (new union (@prototypes window)
+	x = 270
+	y = 10
+	width = 740
+	height = 750
+	title = "Display"
+);
+@display = ( @screen display children );
+
+@display background = (new union(@prototypes image)
+	x = 370
+	y = 395
+	filename = "grass.png"
+);
+
+@screen loptions = (new union (@prototypes window)
+	x = 10
+	y = 420
+	width = 250
+	height = 340
+	title = "Light Info & Options"
+);
+@loptions = ( @screen loptions children );
+
+
+@options btnRestart = (new union (@prototypes button)
+	x= 10
+  	y = 40
+  	width is { @screen options width - 20 }
+	caption = "Restart"	
+);
+
+@options lblSpeed = (new union (@prototypes label)
+	x = 10
+  	y = 120
+	caption = "Max Speed"
+	width is { @screen options width - 30 / 2 }
+);
+
+@options edtSpeed = (new union (@prototypes editbox)
+	x is { @options lblSpeed x + (@options lblSpeed width + 10) }
+  	y is { @options lblSpeed y}
+  	width is { @options lblSpeed width}
+);
+
+@options lblHA = (new union (@prototypes label)
+	x = 10
+  	y = 160
+	caption = "Heavy Acceleration"
+	width is { @screen options width - 30 / 2 }
+);
+
+@options edtHA = (new union (@prototypes editbox)
+	x is { @options lblHA x + (@options lblHA width + 10) }
+  	y is { @options lblHA y}
+  	width is { @options lblHA width}
+);
+
+@options lblLA = (new union (@prototypes label)
+	x = 10
+  	y = 200
+	caption = "Light Acceleration"
+	width is { @screen options width - 30 / 2 }
+);
+
+@options edtLA = (new union (@prototypes editbox)
+	x is { @options lblLA x + (@options lblLA width + 10) }
+  	y is { @options lblLA y}
+  	width is { @options lblLA width}
+);
+
+@options lblHB = (new union (@prototypes label)
+	x = 10
+  	y = 240
+	caption = "Heavy Brake"
+	width is { @screen options width - 30 / 2 }
+);
+
+@options edtHB = (new union (@prototypes editbox)
+	x is { @options lblHB x + (@options lblHB width + 10) }
+  	y is { @options lblHB y}
+  	width is { @options lblHB width}
+);
+
+@options lblLB = (new union (@prototypes label)
+	x = 10
+  	y = 280
+	caption = "Light Brake"
+	width is { @screen options width - 30 / 2 }
+);
+
+@options edtLB = (new union (@prototypes editbox)
+	x is { @options lblLB x + (@options lblLB width + 10) }
+  	y is { @options lblLB y}
+  	width is { @options lblLB width}
+);
+
+@options lblLBD = (new union (@prototypes label)
+	x = 10
+  	y = 320
+	caption = "Light Brake"
+	width is { @screen options width - 30 / 2 }
+);
+
+@options edtLBD = (new union (@prototypes editbox)
+	x is { @options lblLBD x + (@options lblLBD width + 10) }
+  	y is { @options lblLBD y}
+  	width is { @options lblLBD width}
+);
+
+@options lblHBD = (new union (@prototypes label)
+	x = 10
+  	y = 320
+	caption = "Light Brake Distance"
+	width is { @screen options width - 30 / 2 }
+);
+
+@options edtHBD = (new union (@prototypes editbox)
+	x is { @options lblHBD x + (@options lblHBD width + 10) }
+  	y is { @options lblHBD y}
+  	width is { @options lblHBD width}
+);
+
+@options btnRestart buttonclk = 0;
+
+@options btnRestart buttonclk := {
+	if (@options btnRestart click == true) {
+		..buttonclk + 1
+	} else {
+
+		..buttonclk
+	}
+};
+
+@options lblIterations = (new union (@prototypes label)
+	x = 10
+  	y = 360
+	width is { @screen loptions width - 30 / 2 }
+	caption = "Number of Iterations"
+);
+
+@options edtIterations = (new union (@prototypes label)
+	x is { @options lblIterations x + (@options lblIterations width + 10) }
+  	y is { @options lblIterations y}
+  	width is { @options lblIterations width}
+  	its = 0
+  	its := {
+		if (@options btnRestart click) {
+  			0
+  		} else {
+  			..its + 1
+  		}
+	}
+  	caption is {
+  		.its
+  	}
+);
+
+@loptions btnStartStop = (new union (@prototypes button)
+	x= 10
+  	y = 40
+  	toggle = 0
+  	toggle := {
+		if (.click == true) {
+			if(..toggle == 1) {
+				0
+			} else {
+				1
+			}
+		} else {
+			..toggle
+		}
+	}
+  	width is { @screen loptions width - 20 }
+);
+@loptions btnStartStop caption is {
+	if (.toggle == 1) {
+		"Stop Lights"
+	} else {
+		"Start Lights"
+	}
+};
+
+
+# temporary only - a bug fix for the wgd library button
+@loptions btnStartStop mousedown := {.mouseover and (@root input mouse buttons left)};
+
+
+# this was used with the old communication mechanism
+# @eden start is {@loptions btnStartStop toggle};
+
+
+@loptions lblGreen = (new union (@prototypes label)
+	x = (@screen loptions width - 40 / 3 + 20)
+	y = 80
+	width = (@screen loptions width - 40 / 3)
+	caption = "Green"
+);
+@loptions lblOrange = (new union (@prototypes label)
+	x = (@screen loptions width - 40 / 3 * 2 + 30)
+	y = 80
+	width = (@screen loptions width - 40 / 3)
+	caption = "Orange"
+);
+
+@loptions lblT1 = (new union (@prototypes label)
+	x = 10
+	y = 120
+	width = (@screen loptions width - 40 / 3)
+	caption = "Light 1"
+);
+	@loptions edtT1G = (new union (@prototypes editbox)
+		x = (@screen loptions width - 40 / 3 + 20)
+	  	y = 120
+	  	width = (@screen loptions width - 40 / 3)
+	);
+	@loptions edtT1O = (new union (@prototypes editbox)
+		x = (@screen loptions width - 40 / 3 * 2 + 30)
+	  	y = 120
+	  	width = (@screen loptions width - 40 / 3)
+	);
+@loptions lblT2 = (new union (@prototypes label)
+	x = 10
+	y = 160
+	width = (@screen loptions width - 40 / 3)
+	caption = "Light 2"
+);
+	@loptions edtT2G = (new union (@prototypes editbox)
+		x = (@screen loptions width - 40 / 3 + 20)
+	  	y = 160
+	  	width = (@screen loptions width - 40 / 3)
+	);
+	@loptions edtT2O = (new union (@prototypes editbox)
+		x = (@screen loptions width - 40 / 3 * 2 + 30)
+	  	y = 160
+	  	width = (@screen loptions width - 40 / 3)
+	);
+@loptions lblT3 = (new union (@prototypes label)
+	x = 10
+	y = 200
+	width = (@screen loptions width - 40 / 3)
+	caption = "Light 3"
+);
+	@loptions edtT3G = (new union (@prototypes editbox)
+		x = (@screen loptions width - 40 / 3 + 20)
+	  	y = 200
+	  	width = (@screen loptions width - 40 / 3)
+	);
+	@loptions edtT3O = (new union (@prototypes editbox)
+		x = (@screen loptions width - 40 / 3 * 2 + 30)
+	  	y = 200
+	  	width = (@screen loptions width - 40 / 3)
+	);
+
+#LOAD IN RESOURCES FOR MULTI FRAME IMAGES
+
+@carb = (new union (@prototypes image)
+	filename = "carrearsmall.png"
+);
+@carf = (new union (@prototypes image)
+	filename = "carfrontsmall.png"
+);
+@carl = (new union (@prototypes image)
+	filename = "carleftsmall.png"
+);
+@carr = (new union (@prototypes image)
+	filename = "carrightsmall.png"
+);
+@carcrashed = (new union (@prototypes image)
+	filename = "crashed.png"
+);
+
+@lightgreen = (new union (@prototypes image)
+	filename = "lightgreen.png"
+);
+@lightred = (new union (@prototypes image)
+	filename = "lightred.png"
+);
+@lightorange = (new union (@prototypes image)
+	filename = "lightorange.png"
+);
+@lightgreenfull = (new union (@prototypes image)
+	filename = "lightgreenfull.png"
+);
+
+@display roadleft = (new union (@prototypes image)
+	filename = "roadleft.png"
+	x = 172.5
+	y = 380
+);
+@display roadright = (new union (@prototypes image)
+	filename = "roadright.png"
+	x = 567
+	y = 380
+);
+@display roadbottom = (new union (@prototypes image)
+	filename = "roadbottom.png"
+	x = 370
+	y = 577
+);
+@display intersection = (new union (@prototypes image)
+	filename = "intersection.png"
+	x = 370
+	y = 380
+);
+

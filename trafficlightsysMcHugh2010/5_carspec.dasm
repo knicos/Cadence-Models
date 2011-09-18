@@ -1,0 +1,688 @@
+
+##DEFINE CAR AND TRAFFIC LIGHT OBJECTS
+
+@car = (new union (@prototypes image)
+	filename = ""
+	
+	##Current and starting positions of car
+	startx = 0.00
+	starty = 0.00
+	x = 0.00
+	y = 0.00
+	
+	##Target traffic light and the car infront, car infront can be left null if is leading car
+	targetlight = null
+	carahead = null
+	
+	##Reaction and choice are random values used for reaction times and direction to choose at junction
+	reaction = 0
+	choice = 0
+	rotation = 1
+	direction = 1
+	speed = 0.2
+	mspeed = 0.2
+	acceleration = 0.0001
+	##Values for different degrees of acceleration
+	la = 0.00006
+	ha = 0.0002
+	lb = -0.0001
+	hb = -0.0005
+	
+	distance = 0
+	distanceto = 100000
+	distancetol = 100000
+	cleft = 0
+	cright = 0
+	ctop = 0
+	cbottom = 0
+	xoverlap = 0
+	yoverlap = 0
+	crashed = 0
+	
+	sprite is {
+		if (.crashed == 1) {
+			@carcrashed sprite
+		} else {
+			if (..rotation == 1) {
+				@carb sprite
+			} else if (..rotation == 2) {
+				@carr sprite
+			} else if (..rotation == 3) {
+				@carf sprite
+			} else {
+				@carl sprite
+			}
+		}
+	}
+
+	mspeed is { .reaction * 0.05 + 0.15 }
+	
+	speed := {
+		if (.crashed == 0) {
+			if (..speed > (..mspeed)) {
+				if (..acceleration < 0) {
+					..mspeed + (..acceleration)
+				} else {
+					..mspeed
+				}			
+			} else {
+				if (..speed < 0) {
+					0
+				} else {
+					..speed + (..acceleration)
+				}
+			}
+		} else {
+			0
+		}
+	}
+	
+	cleft is { .x - (.sprite width / 2) }
+	cright is { .x + (.sprite width / 2) }
+	ctop is { .y - (.sprite height / 2) }
+	cbottom is { .y + (.sprite height / 2) }
+	
+	
+	caleft is { .carahead x - (.carahead sprite width / 2) }
+	caright is { .carahead x + (.carahead sprite width / 2) }
+	catop is { .carahead y - (.carahead sprite height / 2) }
+	cabottom is { .carahead y + (.carahead sprite height / 2) }
+	
+	caspeed := {
+		if (.carahead == null) {
+			..mspeed
+		} else {
+			..carahead speed
+		}
+	}
+	
+	distance is { 
+		.reaction * 20 + 90
+	}
+	
+	
+	xoverlap := {
+		if (.carahead == null) {
+			0
+		} else {
+			if (..x < (..carahead x)) {
+				if (..x + (..sprite width / 2) > (..carahead x - (..carahead sprite width / 2))) {
+					1
+				} else {
+					0
+				}
+			} else {
+				if (..x - (..sprite width / 2) < (..carahead x + (..carahead sprite width / 2))) {
+					1
+				} else {
+					0
+				}
+			}
+			
+		}
+	}
+	yoverlap := {
+		if (.carahead == null) {
+			0
+		} else {
+			if (..y < (..carahead y)) {
+				if (..y + (..sprite height / 2) > (..carahead y - (..carahead sprite height / 2))) {
+					1
+				} else {
+					0
+				}
+			} else {
+				if (..y - (..sprite height / 2) < (..carahead y + (..carahead sprite height / 2))) {
+					1
+				} else {
+					0
+				}
+			}
+			
+		}
+	}
+	crashed := {
+		if (@options btnRestart click) {
+			0
+		} else {
+			if (..xoverlap == 1 and (..yoverlap == 1)) {
+				1
+			} else {
+				..crashed
+			}
+		}
+	}
+	
+	distanceto is {
+		@root math sqrt (.x - (.carahead x) * (.x - (.carahead x)) + (.y - (.carahead y) * (.y - (.carahead y))))
+	}
+	distancetol is {
+		@root math sqrt (.x - (.targetlight x) * (.x - (.targetlight x)) + (.y - (.targetlight y) * (.y - (.targetlight y))))
+	}
+);
+
+##Will only comment carleft as others are same with minor difference in conditional statements
+@carleft = (new union (@car)
+	x = 100.00
+	y = 380.00
+	
+	##Passed is defined by whether the car has passed its target traffic light, dependent on direction and target light
+	passed := {
+		if (.direction == 1) {
+			if (..targetlight y < (..ctop)) {
+				0
+			} else {
+				1
+			}
+		} else if (..direction == 2) {
+			if (..targetlight x > (..cright)) {
+				0
+			} else {
+				1
+			}
+		} else if (..direction == 4) {
+			if (..targetlight x < (..cleft)) {
+				0
+			} else {
+				1
+			}
+		} else {
+			1
+		}
+	}
+	
+	##Light warning and heavy warning are defined based upon the distance of the neareset effecting object, carhead or traffic light
+	##They are used to decide when to break with a light force and when to break with a heavy force
+	lightwarning is {
+		if (.passed == 0 and (.targetlight stage > 2)) {
+			if (..distanceto < (..distancetol)) {
+				if (..carahead == null or (..distanceto > (..distance * 2))) {
+					0
+				} else { 
+					2
+				}
+			} else {
+				if (..distancetol < (..distance * 2)) {
+					1
+				} else {
+					0
+				}
+			}
+		} else {
+			if (..carahead == null or (..distanceto > (..distance * 2))) {
+				0
+			} else { 
+				2	
+			}
+		}
+	}
+	
+	heavywarning is {
+		if (.passed == 0 and (.targetlight stage > 2)) {
+			if (..distanceto < (..distancetol)) {
+				if (..carahead == null or (..distanceto > (..distance))) {
+					0
+				} else { 
+					2
+				}
+			} else {
+				if (..distancetol < (..distance)) {
+					1
+				} else {
+					0
+				}
+			}
+		} else {
+			if (..carahead == null or (..distanceto > (..distance))) {
+				0
+			} else { 
+				2	
+			}
+		}
+	}
+	
+	##Acceleration is defined by light and heavy warning if the car is within range of a target object, else it is dependent on the speed of the car ahead
+	##to stop vehicles accelerating too hard and crashing into cars ahead
+	acceleration is {
+		if (.heavywarning > 0) {
+			..hb
+		} else if (..lightwarning > 0) {
+			..lb
+		} else {
+			if (..speed < (..caspeed)) {
+				..ha
+			} else {
+				..la
+			}
+		}
+	}
+	
+	##Rotation is used to decide which sprite to use, it is defined by the direction of travel and wether the car has passed the traffic light or not
+	rotation is {
+		if (.passed == 0) {
+			2
+		} else {
+			if (..direction == 2) {
+				2
+			} else {
+				3
+			}
+		}
+	}
+	
+	##Direction of travel is based on cars position along road
+	##At the junction, the car chooses a random direction of travel
+	##Could be extended to weight roads for a particular preference
+	direction is {
+		if (.x < (@display roadbottom x + (@display roadbottom sprite width / 4))) {
+			2
+		} else {
+			if (..choice > 0.5) {
+				2
+			} else {
+				3
+			}
+		}
+	}
+
+	##X and Y co-ords are incremented by the speed value and are reset if the restart button is pressed
+	 x := {
+		 if (@options btnRestart click == false) {
+		 	if (..direction == 2) {
+		 		..x + (..speed)
+		 	} else {
+		 		..x
+		 	}	 
+		 } else {
+		 	..startx
+		 }
+	}
+	y := {
+		 if (@options btnRestart click == false) {
+			if (..direction == 3) {
+		 		..y + (..speed)
+		 	} else {
+		 		..y
+		 	}
+		 } else {
+		 	..starty
+		 }
+	}
+);
+
+# car left definition is above
+
+@carright = (new union (@car)
+
+	passed := {
+		if (.direction == 1) {
+			if (..targetlight y < (..ctop)) {
+				0
+			} else {
+				1
+			}
+		} else if (..direction == 2) {
+			if (..targetlight x > (..cright)) {
+				0
+			} else {
+				1
+			}
+		} else if (..direction == 4) {
+			if (..targetlight x < (..cleft)) {
+				0
+			} else {
+				1
+			}
+		} else {
+			1
+		}
+	}
+	
+	lightwarning is {
+		if (.passed == 0 and (.targetlight stage > 2)) {
+			if (..distanceto < (..distancetol)) {
+				if (..carahead == null or (..distanceto > (..distance * 2))) {
+					0
+				} else { 
+					2
+				}
+			} else {
+				if (..distancetol < (..distance * 2)) {
+					1
+				} else {
+					0
+				}
+			}
+		} else {
+			if (..carahead == null or (..distanceto > (..distance * 2))) {
+				0
+			} else { 
+				2	
+			}
+		}
+	}
+	
+	heavywarning is {
+		if (.passed == 0 and (.targetlight stage > 2)) {
+			if (..distanceto < (..distancetol)) {
+				if (..carahead == null or (..distanceto > (..distance))) {
+					0
+				} else { 
+					2
+				}
+			} else {
+				if (..distancetol < (..distance)) {
+					1
+				} else {
+					0
+				}
+			}
+		} else {
+			if (..carahead == null or (..distanceto > (..distance))) {
+				0
+			} else { 
+				2	
+			}
+		}
+	}
+	
+	acceleration is {
+		if (.heavywarning > 0) {
+			..hb
+		} else if (..lightwarning > 0) {
+			..lb
+		} else {
+			if (..speed < (..caspeed)) {
+				..ha
+			} else {
+				..la
+			}
+		}
+	}
+	
+	rotation is {
+		if (.passed == 0) {
+			4
+		} else {
+			if (..direction == 4) {
+				4
+			} else {
+				3
+			}
+		}
+	}
+	
+	direction is {
+		if (.x > (@display roadbottom x + (@display roadbottom sprite width / 4))) {
+			4
+		} else {
+			if (..choice > 0.5) {
+				4
+			} else {
+				3
+			}
+		}
+	}
+
+	 x := {
+		 if (@options btnRestart click == false) {
+			if (..direction == 4) {
+		 		..x - (..speed)
+		 	} else {
+		 		..x
+		 	}	 
+		} else {
+			 ..startx
+		}
+	}
+	y := {
+		if (@options btnRestart click == false) {
+			if (..direction == 3) {
+		 		..y + (..speed)
+		 	} else {
+		 		..y
+		 	}	 
+		} else {
+		 	..starty
+		}
+	}
+);
+
+@carbottom = (new union (@car)
+	
+	passed := {
+		if (.direction == 1) {
+			if (..targetlight y < (..ctop)) {
+				0
+			} else {
+				1
+			}
+		} else if (..direction == 2) {
+			if (..targetlight x > (..cright)) {
+				0
+			} else {
+				1
+			}
+		} else if (..direction == 4) {
+			if (..targetlight x < (..cleft)) {
+				0
+			} else {
+				1
+			}
+		} else {
+			1
+		}
+	}
+	
+	lightwarning is {
+		if (.passed == 0 and (.targetlight stage > 2)) {
+			if (..distanceto < (..distancetol)) {
+				if (..carahead == null or (..distanceto > (..distance * 2))) {
+					0
+				} else { 
+					2
+				}
+			} else {
+				if (..distancetol < (..distance * 2)) {
+					1
+				} else {
+					0
+				}
+			}
+		} else {
+			if (..carahead == null or (..distanceto > (..distance * 2))) {
+				0
+			} else { 
+				2	
+			}
+		}
+	}
+	
+	heavywarning is {
+		if (.passed == 0 and (.targetlight stage > 2)) {
+			if (..distanceto < (..distancetol)) {
+				if (..carahead == null or (..distanceto > (..distance))) {
+					0
+				} else { 
+					2
+				}
+			} else {
+				if (..distancetol < (..distance)) {
+					1
+				} else {
+					0
+				}
+			}
+		} else {
+			if (..carahead == null or (..distanceto > (..distance))) {
+				0
+			} else { 
+				2	
+			}
+		}
+	}
+	
+	acceleration is {
+		if (.heavywarning > 0) {
+			..hb
+		} else if (..lightwarning > 0) {
+			..lb
+		} else {
+			if (..speed < (..caspeed)) {
+				..ha
+			} else {
+				..la
+			}
+		}
+	}
+	
+	rotation is {
+		if (.passed == 0) {
+			1
+		} else {
+			if (..direction == 1) {
+				1
+			} else if (..direction == 4) {
+				4
+			} else {
+				2
+			}
+		}
+	}
+	
+	direction is {
+		if (.y > (@display roadleft y + (@display roadleft sprite height / 4))) {
+			1
+		} else {
+			if (..choice > 0.5) {
+				4
+			} else {
+				if (..y > (@display roadleft y - (@display roadleft sprite height / 4))) {
+					1
+				} else {
+					2
+				}
+			}
+		}
+	}
+	
+	x := {
+		 if (@options btnRestart click == false) {
+		 	if (..direction == 4) {
+		 		..x - (..speed)
+		 	} else if (..direction == 2) {
+		 		..x + (..speed)
+		 	} else {
+		 		..x
+		 	}
+		} else {
+			 ..startx
+		}
+	}
+	y := {
+		if (@options btnRestart click == false) {
+			if (..direction == 1) {
+		 		..y - (..speed)
+		 	} else {
+		 		..y
+		 	}
+		} else {
+		 	..starty
+		}
+	}
+);
+
+
+##Add cars and set their starting position, their target traffic light, and init random values required
+
+
+@display carleft1 = (new union (@carleft)
+	startx = -100
+	starty = (@display roadleft y - 12.5)
+	x = -100
+	y = (@display roadleft y - 12.5)
+	targetlight = (@display light1)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);
+@display carleft2 = (new union (@carleft)
+	startx = -600
+	starty = (@display roadleft y - 12.5)
+	x = -600
+	y = (@display roadleft y - 12.5)
+	targetlight = (@display light1)
+	carahead = (@display carleft1)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);
+@display carleft3 = (new union (@carleft)
+	startx = -800
+	starty = (@display roadleft y - 12.5)
+	x = -800
+	y = (@display roadleft y - 12.5)
+	targetlight = (@display light1)
+	carahead = (@display carleft2)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);
+@display carleft4 = (new union (@carleft)
+	startx = -1000
+	starty = (@display roadleft y - 12.5)
+	x = -1000
+	y = (@display roadleft y - 12.5)
+	targetlight = (@display light1)
+	carahead = (@display carleft3)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);
+
+@display carright1 = (new union (@carright)
+	startx = 900
+	starty = (@display roadleft y + 12.5)
+	x = 900
+	y = (@display roadleft y + 12.5)
+	targetlight = (@display light2)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);
+@display carright2 = (new union (@carright)
+	startx = 1200
+	starty = (@display roadleft y + 12.5)
+	x = 1200
+	y = (@display roadleft y + 12.5)
+	targetlight = (@display light2)
+	carahead = (@display carright1)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);
+@display carright3 = (new union (@carright)
+	startx = 1800
+	starty = (@display roadleft y + 12.5)
+	x = 1800
+	y = (@display roadleft y + 12.5)
+	targetlight = (@display light2)
+	carahead = (@display carright2)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);
+
+@display carbottom1 = (new union (@carbottom)
+	startx = (@display roadbottom x - 12.5)
+	starty = 1000
+	x = (@display roadbottom x - 12.5)
+	y = 1000
+	targetlight = (@display light3)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);
+
+@display carbottom2 = (new union (@carbottom)
+	startx = (@display roadbottom x - 12.5)
+	starty = 1300
+	x = (@display roadbottom x - 12.5)
+	y = 1300
+	targetlight = (@display light3)
+	carahead = (@display carbottom1)
+	reaction = (@root math _random void)
+	choice = (@root math _random void)
+);

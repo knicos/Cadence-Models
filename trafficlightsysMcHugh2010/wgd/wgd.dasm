@@ -1,0 +1,109 @@
+this window = (new type=GameWindow
+	#width = 1920
+	#height = 2556
+	#width = 1920
+	#height = 1200
+	#width = 800
+	#height = 600
+	width = 1024
+	height = 768
+	fullscreen = false 
+	colourdepth = 32
+	depthbuffer = 24
+	title = "Cadence UI (WGD-lib)"
+);
+
+@window = (this window);
+
+this widgets = (new
+	type=WidgetManager
+	x is { @root input mouse x }
+	y is { @root input mouse y }
+	left is { @root input mouse buttons left }
+	grabbed = false
+);
+
+this input = (new type=Input
+	keyboard = (new type=Keyboard
+		keys = (new
+			escape = false
+		)
+	)
+	mouse = (new type=Mouse
+		visible = true
+		buttons = (new
+			left = false
+			middle = false
+			right = false
+		)
+		
+		#grabx is { this grab; this ! x}
+		#graby is { this grab; this ! y}
+		
+		#deltax is {
+		#	if(this grab1) { this x sub (this grabx)} else 0.0
+		#}
+		#deltay is {
+		#	if(this grab1) { this y sub (this graby)} else 0.0
+		#}
+		
+		#x is { if(this grab1) { this x; this ! grabx} else { this ! x }}
+		#y is { if(this grab1) { this y; this ! graby} else { this ! y }}
+		#
+		#grab = false
+		#grab1 is { this grab }
+		#visible is { this grab not }
+		
+	)
+	wiimotes = (new
+		find = void
+	)
+);
+
+@widgets = (this widgets);
+@wiimotes = (this input wiimotes);
+@input = (this input);
+@keyboard = (this input keyboard);
+@mouse = (this input mouse);
+
+#this running is { @keyboard keys escape not };
+#.exit func { @root running = false };
+
+this input update is { @root time; void };
+
+
+
+#@dasm run = (new type=LocalFile filename = "./scripts/operators/operators.dasm");
+#@dasm run = (new type=LocalFile filename = "./scripts/prototypes/prototypes.dasm");
+#@dasm run = (new type=LocalFile filename = "./scripts/materials/materials.dasm");
+%include "wgd/materials/materials.dasm";
+%include "wgd/prototypes/prototypes.dasm";
+%include "wgd/themes/simple_dark.dasm";
+%include "wgd/modules.dasm";
+
+this widgets root = (new
+	type = Widget
+	x = 0
+	y = 0
+	width is { @window width }
+	height is { @window height }
+	frame = 0
+	visible = true
+	border = 0
+	sprite = (new
+		type = Sprite
+		frames = 1
+		columns = 1
+		rows = 1
+		texture = (new
+			type = Texture
+			file = (new
+				type = LocalFile
+				filename = "data/wgd/emdesk.png"
+			)
+			compress = false
+		)
+	)
+
+	children = (new)
+);
