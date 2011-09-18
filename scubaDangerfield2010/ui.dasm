@@ -1,0 +1,392 @@
+@window title = "Dangerfield's Dive Model";
+@screen = (@widgets root children);
+@screen sea = (new union (@prototypes image)
+        filename="images/sea.png"
+        x = 0
+        y = 0
+	height = 600
+	width = 800
+	children = (new)
+);
+@screen diver = (new union (@prototypes image)
+	filename="images/diver.png"
+	x = 100
+	y is {30 + (@root depth * (8))}
+	visible is { if(@root depth == (@root targetdepth)) { true } else { false } }  
+	width = 47
+	height = 14
+);
+@screen diverAscend = (new union (@prototypes image)
+        filename="images/diverAscend.png"
+        x = 100
+        y is {30 + (@root depth * (8))}
+	visible is { if(@root depth > (@root targetdepth)) { true } else { false } }
+        width = 14
+        height = 47
+);
+@screen diverDescend = (new union (@prototypes image)
+        filename="images/diverDescend.png"
+        x = 100
+        y is {7 + (@root depth * (8))}
+	visible is { if(@root depth < (@root targetdepth)) { true } else { false } }
+        width = 14
+        height = 47
+);
+@screen target = (new union (@prototypes image)
+        filename="images/target.png"
+        x = 100
+        y is {30 + (@root targetdepth * (8))}
+        visible is { if(@root depth == (@root targetdepth)) { false } else { true } }
+        width = 11
+        height = 11
+);
+
+
+@tints = (new
+	normal = (new r = 0 g = 0.54 b = 0.93)
+	error = (new r = 1 g = 0 b = 0)
+	warn = (new r = 1 g = 0.78 b = 0)
+);
+@sprite = (new
+	basic = (new union (@prototypes sprite)
+		filename = "images/sprite.png"
+		columns = 2
+	)
+);
+
+@templates = (new);
+@templates %deep label = (new union (@prototypes label)
+	tint is {@tints normal}
+	frame = 1
+	sprite is {@sprite basic}
+);
+@templates %deep valueIndicatorSmall = (new union (@prototypes widget)
+	width = 140
+       	height = 20
+       	%deep children = (new
+       		%deep label = (new union (@templates label)
+                       	x = 10 
+                       	y = 2
+                       	width = 50
+               	)
+               	%deep value = (new union (@templates label)
+                       	x is {..label x + (..label width)}
+               		y = 2
+               	)
+        )
+	tint is {@tints normal}
+	sprite is {@sprite basic}
+);
+@templates %deep indicatorGroup = (new union (@prototypes widget)
+	width = 250
+	items = 1
+	height is {40 + (.items * (20))}
+	%deep children = (new
+                %deep label = (new union (@templates label)
+                        x = 10
+                        y = 4
+			width := {...width - (20)}
+                )
+	)
+	tint is {@tints normal}
+	sprite is {@sprite basic}
+);
+@templates %deep indicatorGroupItem = (new union (@prototypes widget)
+        width = 200
+        height = 20
+        x = 10
+        y = 25
+        %deep children = (new
+               %deep label = (new union (@templates label)
+                       x = 5
+                       y = 2
+                       width = 100
+               )
+               %deep value = (new union (@templates label)
+                        x is {..label x + (..label width)}
+                        y = 2
+               )
+        )
+        tint is {@tints normal}
+	sprite is {@sprite basic}
+);
+
+@templates %deep depthlabel = (new union (@templates label)
+	x = 30
+	depth = 0
+	y is {30 + (.depth * (8))}
+	caption is {.depth}
+);
+
+@templates %deep compartment = (new union (@templates indicatorGroupItem));
+@templates compartment children value caption is {...pointer gases nitrogen pp};
+
+@templates %deep ceiling = (new union (@templates indicatorGroupItem));
+@templates ceiling tint is { if(.pointer ceiling actualDepth > (@root depth)) { @tints error } else if(..pointer ceiling depth > (@root depth)) {@tints warn} else { @tints normal } };
+@templates ceiling children value caption is {...pointer ceiling depth};
+
+# Basic Dive Gauge
+
+@screen depthgauge = (new union (@templates valueIndicatorSmall)
+        x = 250
+	y = 100
+);
+@screen depthgauge children label caption = "Depth:";
+@screen depthgauge children value caption is {@root depth};
+
+@screen maxdepth = (new union (@templates valueIndicatorSmall)
+        x is {@screen depthgauge x}
+        y is {@screen depthgauge y + (@screen depthgauge height) + (10)}
+);
+@screen maxdepth children label caption = "Max:";
+@screen maxdepth children value caption is {@root maxdepth};
+
+
+@screen timer = (new union (@templates valueIndicatorSmall)
+        x is {@screen depthgauge x}
+        y is {@screen maxdepth y + (@screen maxdepth height) + (10)}
+);
+@screen timer children label caption = "Time:";
+@screen timer children value caption is {@root modeltimeminutes};
+
+# Game Speed
+@screen speed  = (new union (@templates valueIndicatorSmall)
+        x is {@screen depthgauge x}
+        y is {@screen timer y + (@screen timer height) + (10)}
+);
+@screen speed children label caption = "Speed:   x";
+@screen speed children value caption is {@root xspeed};
+@screen speed children value x is {..label x + (..label width) + (12)};
+
+# Mix Percentages
+@screen mix = (new union (@templates indicatorGroup)
+        x is {@screen depthgauge x}
+        y is {@screen speed y + (@screen timer height) + (10)}
+	items = 1
+);
+@screen mix children label caption = "Gas Mix (%)";
+
+@screen mix children oxygen = (new union (@templates indicatorGroupItem));
+@screen mix children oxygen children label caption = "Oxygen";
+@screen mix children oxygen children value caption := {@root gases oxygen mix * (100)};
+# Nitrogen is ignored in mix specs.
+
+# Breating Gas Pressures
+
+@screen breathingpp = (new union (@templates indicatorGroup)
+	x is {@screen depthgauge x}
+	y is {@screen mix y + (@screen mix height) + (10)}
+	items = 2
+);
+@screen breathingpp children label caption = "Partial Pressures of Supplied Gas (BAR)";
+
+@screen breathingpp children oxygen = (new union (@templates indicatorGroupItem));
+@screen breathingpp children oxygen children label caption = "Oxygen";
+@screen breathingpp children oxygen children value caption is {@root gases oxygen pp};
+
+# Oxygen becomes increasingly dangerous ("Oxygen toxicity") over a partial pressure of 1.4+ bar. Indicate so:
+@screen breathingpp children oxygen tint is { if(@root gases oxygen pp > (2.0)) {@tints error} else if(@root gases oxygen pp > (1.4)) {@tints warn} else {@tints normal}};
+
+@screen breathingpp children nitrogen = (new union (@templates indicatorGroupItem)
+	y is {..oxygen y + (..oxygen height)}
+);
+@screen breathingpp children nitrogen children label caption = "Nitrogen";
+@screen breathingpp children nitrogen children value caption is {@root gases nitrogen pp};
+
+# Nitrogen narcosis gets increasing dangerous at pressures over 4 bar. 
+@screen breathingpp children nitrogen tint is { if(@root gases nitrogen pp > (5.0)) {@tints error} else if(@root gases nitrogen pp > (4.0)) {@tints warn} else {@tints normal}};
+
+# Tissue States
+
+@screen compartments = (new union (@templates indicatorGroup)
+        x = 520
+        y = 100
+	items = 9
+);
+@screen compartments children label caption = "Tissue Pressures for Nitrogen (BAR)";
+
+@screen compartments children 0 = (new union (@templates compartment)
+	pointer := {@root compartments 0}
+);
+@screen compartments children 0 children label caption = "Compartment 1:";
+
+@screen compartments children 1 = (new union (@templates compartment)
+        y is {..0 y + (..0 height)}
+	pointer is {@root compartments 1}
+);
+@screen compartments children 1 children label caption = "Compartment 2:";
+
+@screen compartments children 2 = (new union (@templates compartment)
+        y is {..1 y + (..1 height)}
+	pointer is {@root compartments 2}
+);
+@screen compartments children 2 children label caption = "Compartment 3:";
+
+@screen compartments children 3 = (new union (@templates compartment)
+        y is {..2 y + (..2 height)}
+	pointer is {@root compartments 3}
+);
+@screen compartments children 3 children label caption = "Compartment 4:";
+
+@screen compartments children 4 = (new union (@templates compartment)
+        y is {..3 y + (..3 height)}
+	pointer is {@root compartments 4}
+);
+@screen compartments children 4 children label caption = "Compartment 5:";
+
+@screen compartments children 5 = (new union (@templates compartment)
+        y is {..4 y + (..4 height)}
+	pointer is {@root compartments 5}
+);
+@screen compartments children 5 children label caption = "Compartment 6:";
+
+@screen compartments children 6 = (new union (@templates compartment)
+        y is {..5 y + (..5 height)}
+	pointer is {@root compartments 6}
+);
+@screen compartments children 6 children label caption = "Compartment 7:";
+
+@screen compartments children 7 = (new union (@templates compartment)
+        y is {..6 y + (..6 height)}
+	pointer is {@root compartments 7}
+);
+@screen compartments children 7 children label caption = "Compartment 8:";
+
+@screen compartments children 8 = (new union (@templates compartment)
+        y is {..7 y + (..7 height)}
+	pointer is {@root compartments 8}
+);
+@screen compartments children 8 children label caption = "Compartment 9:";
+
+
+# Depth Labels
+
+@screen sea children metres00 = (new union (@templates depthlabel) depth = 0);
+@screen sea children metres10 = (new union (@templates depthlabel) depth = 10);
+@screen sea children metres20 = (new union (@templates depthlabel) depth = 20);
+@screen sea children metres30 = (new union (@templates depthlabel) depth = 30);
+@screen sea children metres40 = (new union (@templates depthlabel) depth = 40);
+@screen sea children metres50 = (new union (@templates depthlabel) depth = 50);
+@screen sea children metres60 = (new union (@templates depthlabel) depth = 60);
+
+# Keyboard interaction
+
+#  UP & DOWN controls depth
+#  LEFT & RIGHT controls game speed
+#  NUMBERS switch between gas mixes
+
+# The following is intended to reduce the key press rate, so the targetdepth is somewhat easier to control
+# [NOTE] For some unknown-to-the-author reason, keyboard presses appear to come in 2s, thus targetdepth jumps in 2m.
+
+@keyboardtimings = (new up = 0 down = 0 right = 0 left = 0);
+@keyboardclicks = (new up = false down = false right = 0 left = 0);
+
+@keyboardtimings up := { if(@keyboardclicks up == true) { @root time } else { @keyboardtimings up }} ;
+@keyboardtimings down := { if(@keyboardclicks down == true) { @root time } else { @keyboardtimings down }} ;
+@keyboardtimings right := { if(@keyboardclicks right == true) { @root time } else { @keyboardtimings right }} ;
+@keyboardtimings left := { if(@keyboardclicks left == true) { @root time } else { @keyboardtimings left }} ;
+
+@keyboardclicks up := { if(@keyboard keys up == true and (@root time - (@keyboardtimings up) > 0.2)) { true } else { false } };
+@keyboardclicks down := { if(@keyboard keys down == true and (@root time - (@keyboardtimings down) > 0.2)) { true } else { false } };
+@keyboardclicks right := { if(@keyboard keys right == true and (@root time - (@keyboardtimings right) > 0.2)) { true } else { false } };
+@keyboardclicks left := { if(@keyboard keys left == true and (@root time - (@keyboardtimings left) > 0.2)) { true } else { false } };
+
+
+@keyboard lastnumber := {
+	if(@keyboard keys '1' == true) {1}
+	else if (@keyboard keys '2' == true) {2}
+	else if (@keyboard keys '3' == true) {3}
+	else {@keyboard lastnumber}
+};
+@root gases oxygen mix := {
+	if(@keyboard lastnumber == 2) {0.32}
+	else if (@keyboard lastnumber == 3) {0.36}
+	else {0.21}
+};
+
+# [NOTE] When cadence can do Math.max & Math.min, we can add boundaries for the targetdepth nicely
+
+@root targetdepth := {
+	if(@keyboardclicks down == true) {
+        	if(@root targetdepth + 1 >= 60) { 60 }
+		else { @root targetdepth + 1 }
+        } else if(@keyboardclicks up == true) {
+		if(@root targetdepth - 1 <= 0) { 0 }
+		else { @root targetdepth - 1 }
+        } else {
+                @root targetdepth
+        }
+};
+@root xspeed := {
+	if(@keyboardclicks left == true) {
+		if(@root xspeed - 1 <= 1) { 1 }
+		else { @root xspeed - 1 }
+	} else if(@keyboardclicks right == true) {
+		@root xspeed + 1
+	} else {
+		@root xspeed
+	}
+};
+
+# Ceiling outputs
+
+@screen ceilings = (new union (@templates indicatorGroup)
+        x is {@screen compartments x}
+        y is {@screen compartments y + (@screen compartments height) + (10)}
+        items = 9
+);
+@screen ceilings children label caption = "Tissue Ceilings (METRES DEPTH)";
+
+@screen ceilings children 0 = (new union (@templates ceiling)
+        pointer is {@root compartments 0}
+);
+@screen ceilings children 0 children label caption = "Compartment 1:";
+
+@screen ceilings children 1 = (new union (@templates ceiling)
+        y is {..0 y + (..0 height)}
+        pointer is {@root compartments 1}
+);
+@screen ceilings children 1 children label caption = "Compartment 2:";
+
+@screen ceilings children 2 = (new union (@templates ceiling)
+        y is {..1 y + (..1 height)}
+        pointer is {@root compartments 2}
+);
+@screen ceilings children 2 children label caption = "Compartment 3:";
+
+@screen ceilings children 3 = (new union (@templates ceiling)
+        y is {..2 y + (..2 height)}
+        pointer is {@root compartments 3}
+);
+@screen ceilings children 3 children label caption = "Compartment 4:";
+
+@screen ceilings children 4 = (new union (@templates ceiling)
+        y is {..3 y + (..3 height)}
+        pointer is {@root compartments 4}
+);
+@screen ceilings children 4 children label caption = "Compartment 5:";
+
+@screen ceilings children 5 = (new union (@templates ceiling)
+        y is {..4 y + (..4 height)}
+        pointer is {@root compartments 5}
+);
+@screen ceilings children 5 children label caption = "Compartment 6:";
+
+@screen ceilings children 6 = (new union (@templates ceiling)
+        y is {..5 y + (..5 height)}
+        pointer is {@root compartments 6}
+);
+@screen ceilings children 6 children label caption = "Compartment 7:";
+
+@screen ceilings children 7 = (new union (@templates ceiling)
+        y is {..6 y + (..6 height)}
+        pointer is {@root compartments 7}
+);
+@screen ceilings children 7 children label caption = "Compartment 8:";
+
+@screen ceilings children 8 = (new union (@templates ceiling)
+        y is {..7 y + (..7 height)}
+        pointer is {@root compartments 8}
+);
+@screen ceilings children 8 children label caption = "Compartment 9:";
+

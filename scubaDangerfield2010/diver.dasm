@@ -1,0 +1,187 @@
+# HEALTH WARNINGS
+# * Do not use this script to plan your diving. Always use a dive computer.
+# * Reading this script may cause you confusion if you don't understand union & %deep
+
+.xspeed = 4;
+
+.modelitime is { .itime * ( .xspeed ) };
+.modeltime = 0;
+.modeltime := { .modeltime + (.modelitime) };
+.modeltimeminutes is {.modeltime / (60)};
+
+# Depth target in water
+.targetdepth = 0.0;
+.targetdepth := {0.0};
+
+# 12 metres/minute ascent rate
+.ascentrate = 0.2;
+# 30metres/minute descent rate
+.descentrate = 0.5;
+
+# Depth changes as by the ascent/descent rate, to the target depth
+.depth = 0.0;
+.depth := {
+	# [NOTE] Dot notation appears to be inconsistent in this revision of Cadence
+	if (.targetdepth - (.modelitime) < (.depth) and (.targetdepth + (.modelitime) > (.depth))) {
+		..targetdepth
+	} else {
+		if (..depth < (..targetdepth)) {
+                        ..depth + (..descentrate * (..modelitime))
+		} else {
+                        ..depth - (..ascentrate * (..modelitime))
+		}
+	}
+};
+
+# Pressure on body in BAR, as a multiple of the pressure at sea level
+.atmospheres is {.depth/10 + 1.0};
+
+# Keep a record of maximum depth
+.maxdepth = 0;
+.maxdepth := {
+	if(.depth > (.maxdepth)) {
+		..depth
+	} else {
+		..maxdepth
+	}
+};
+
+# A diver will breath a gas mix, comprised of many component gases.
+# The scuba kit will supply a different pressure of the gas mix at different depths
+# The partial pressures of each component gas are calculated
+
+.gases = (new
+	%deep abstract = (new
+		mix = 0
+		pp is {.mix * (@root atmospheres)}
+	)
+);
+
+
+# These mix percentages are common to most air on Earth
+# Gas mix should be identical to air on model initialisation
+.gases oxygen = (new union (.gases abstract));
+.gases oxygen mix = 0.2095;
+
+# Changing the percentage of oxygen in the gas results in less Nitrogen
+# Divers call these 'Rich mixes', and result in faster decompression rates
+.gases nitrogen = (new union (.gases abstract));
+.gases nitrogen mix is {1 - (@root gases oxygen mix)};
+
+# Model design allows other gas mixes to be added fairly easily.
+# Advanced divers may use Helium, Hydrogen or even Neon.
+# The majority of all diving is however, made on Nitrox (oxygen & nitrogen)
+
+# Contents of the human body are grouped into i compartments
+# Fast tissue live in .compartments 0
+# Slow bits, like bone marrow are in the ith compartment.
+# The size of i, and their individual half times has changed between research over time.
+# The size of i can be changed in this model
+
+.compartments = (new
+	%deep abstract = (new
+		#Each compartment has a different half time, in minutes
+		%deep halfLife = (new
+			minutes = 1
+			seconds is {.minutes * 60}
+		)
+		#Each compartment is saturated by a number of gases
+		%deep gases = (new
+			abstract = (new
+				supplied = 1
+				pp = 1
+			)
+		)
+		a = 0
+		b = 0
+	)
+);
+
+# Breathing gas mix component's partial pressure pointers intialised
+.compartments abstract gases %deep oxygen = (new union (.compartments abstract gases abstract));
+.compartments abstract gases %deep nitrogen = (new union (.compartments abstract gases abstract));
+
+.compartments abstract gases oxygen supplied is {@root gases oxygen};
+.compartments abstract gases nitrogen supplied is {@root gases nitrogen};
+
+# Partial pressures in each tissue are initialised to air
+.compartments abstract gases oxygen pp is {.supplied pp};
+.compartments abstract gases nitrogen pp is {.supplied pp};
+
+# o2 Toxicity Calculations
+# Oxygen is special. Too high a PP (1.4+), and body could react (dangerously) AT ANY TIME
+.compartments abstract gases oxygen pp is {.supplied pp};
+
+# Nitrogen Decompression model
+# Nitrogen is more complex. It follows a gradient of absorbition and release
+# Too high a PP, and diver gets Nitrogen Narcosis
+
+# [NOTE] Cadence IDE does not display the accuracy required for some variables. pp however, calculates correctly. 
+.compartments abstract gases nitrogen Po := {.pp};
+.compartments abstract gases nitrogen Pi is {.supplied pp};
+.compartments abstract gases nitrogen PiMinusPo is {.Pi - (.Po)};
+.compartments abstract gases nitrogen t is {@root modelitime};
+.compartments abstract gases nitrogen halfTime is {...halfLife seconds};
+.compartments abstract gases nitrogen TimeOverHalfLife is {.t / (.halfTime)};
+.compartments abstract gases nitrogen NegativeTimeOverHalfLife is {0 - (.TimeOverHalfLife)};
+.compartments abstract gases nitrogen TwoPowerNegativeTimeOverHalfLife is {@ffi pow 2 (.NegativeTimeOverHalfLife)};
+.compartments abstract gases nitrogen HalfLifeChange is {1 - (.TwoPowerNegativeTimeOverHalfLife)};
+.compartments abstract gases nitrogen Pchange is {.PiMinusPo * (.HalfLifeChange) };
+.compartments abstract gases nitrogen pp is { .Po + (.Pchange) };
+
+# Every tissue has a ceiling (ie, a minimum depth to perform a decompression stop)
+# Not required for oxygen, but for other gases it is required.
+# Don't want to stop the diver on the limit, but a few metres below it
+# Negative ceilings are also bad.
+# [NOTE] Rounding functionality in Cadence would be useful here
+.compartments abstract %deep ceiling = (new
+	actualBar is {..b * (..gases nitrogen pp - (..a))}
+	actualDepth is {10 * (.actualBar - (1))}
+	depth is { if(.actualDepth > (0)) { ..actualDepth + (3) } else {0} }
+);
+
+# Different compartments, and their different half times
+.compartments 0 = (new union (.compartments abstract));
+.compartments 0 halfLife minutes = 4;
+.compartments 0 a = 1.2599;
+.compartments 0 b = 0.5050;
+
+.compartments 1 = (new union (.compartments abstract));
+.compartments 1 halfLife minutes = 5;
+.compartments 1 a = 1.0000;
+.compartments 1 b = 0.6514;
+
+.compartments 2 = (new union (.compartments abstract));
+.compartments 2 halfLife minutes = 8;
+.compartments 2 a = 0.8618;
+.compartments 2 b = 0.7222;
+
+.compartments 3 = (new union (.compartments abstract));
+.compartments 3 halfLife minutes = 12.5;
+.compartments 3 a = 0.7562;
+.compartments 3 b = 0.7725;
+
+.compartments 4 = (new union (.compartments abstract));
+.compartments 4 halfLife minutes = 18.5;
+.compartments 4 a = 0.6200;
+.compartments 4 b = 0.8125;
+
+.compartments 5 = (new union (.compartments abstract));
+.compartments 5 halfLife minutes = 27;
+.compartments 5 a = 0.5043;
+.compartments 5 b = 0.8434;
+
+.compartments 6 = (new union (.compartments abstract));
+.compartments 6 halfLife minutes = 38.3;
+.compartments 6 a = 0.4410;
+.compartments 6 b = 0.8693;
+
+.compartments 7 = (new union (.compartments abstract));
+.compartments 7 halfLife minutes = 54.3;
+.compartments 7 a = 0.4000;
+.compartments 7 b = 0.8910;
+
+.compartments 8 = (new union (.compartments abstract));
+.compartments 8 halfLife minutes = 77.0;
+.compartments 8 a = 0.3750;
+.compartments 8 b = 0.9092;

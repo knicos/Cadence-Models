@@ -1,0 +1,9 @@
+this modules ffi = (new type=Module
+	file = (new type=LocalFile
+		filename = "libcadence_ffi.so"
+	)
+	base = (this)
+	update = false
+);
+
+@ffi = (.ffi);

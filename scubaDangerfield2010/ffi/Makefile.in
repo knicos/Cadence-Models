@@ -1,0 +1,21 @@
+CXX=@CXX@
+CXXFLAGS=@CXXFLAGS@
+CPPFLAGS=@CPPFLAGS@
+LDFLAGS=@LDFLAGS@
+
+HEADERS=dll.h
+SOURCES=ffi.cpp
+OBJECTS=$(SOURCES:.cpp=.o)
+
+LIB=libcadence_ffi.so
+
+all: $(SOURCES) $(LIB)
+
+$(LIB): $(OBJECTS)
+	$(CXX) --shared $(LDFLAGS) -o $@ $(OBJECTS)
+
+.cpp.o:
+	$(CXX) -fPIC -c $(CPPFLAGS) $(CXXFLAGS) $< -o $@
+
+clean:
+	rm -f $(LIB) $(OBJECTS)

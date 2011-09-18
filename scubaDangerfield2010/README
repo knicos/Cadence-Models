@@ -1,0 +1,12 @@
+*****************************************
+Diver Model usage Instructions
+*****************************************
+
+Build the FFI module by Tim Monks.
+Copy the built file & dsam script to this directory.
+Run model.dasm in Cadence.
+
+Enjoy!
+
+Thanks
+William Dangerfield

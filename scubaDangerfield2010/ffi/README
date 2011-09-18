@@ -1,0 +1,16 @@
+-------------------------------------
+build instructions for the FFI module
+-------------------------------------
+./configure
+make
+
+-------------------------------------
+usage in cadence:
+-------------------------------------
+make sure that libcadence_ffi.so and ffi.dasm are somewhere in your
+CADENCE_PATH. you can now use:
+
+%include "ffi.dasm"
+@ffi pow 2 3
+
+e.g. to compute 2 to the power of 3
