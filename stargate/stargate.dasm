@@ -7,7 +7,7 @@
 	width = 640
 	height = 480
 );
-.widgets root children sgate = (@sgwidget);
+#.widgets root children sgate = (@sgwidget);
 
 %include "stargate/window.dasm";
 %include "stargate/viz.dasm";
